@@ -85,6 +85,33 @@ def _make_snippet(plain: str, html: str, max_len: int = 200) -> str:
     return ""
 
 
+def _extract_code(subject: str, body: str) -> str | None:
+    """
+    从邮件主题和正文中提取验证码 / 一次性密码。
+    返回第一个匹配的验证码字符串，未找到返回 None。
+    """
+    import re
+    for text in [subject, body]:
+        if not text:
+            continue
+        # 匹配关键词后跟验证码，中间允许 "是/为/:" 等连接词
+        m = re.search(
+            r'(?:verification code|code|代码|验证码|密码|口令|pin)'
+            r'[\s]*(?:is|为|是|：|:|\s)\s*(\d{4,8})',
+            text, re.IGNORECASE,
+        )
+        if m:
+            return m.group(1)
+    # 退而求其次：独立成行的 4-8 位纯数字
+    for text in [body, subject]:
+        if not text:
+            continue
+        m = re.search(r'(?:^|\s)(\d{4,8})(?:\s|$)', text, re.MULTILINE)
+        if m:
+            return m.group(1)
+    return None
+
+
 def fetch_emails(
     account_email: str,
     imap_password: str,
@@ -126,12 +153,15 @@ def fetch_emails(
             # 完整正文：优先纯文本，否则从 HTML 转换
             body = plain if plain else _html_to_text(html)
 
+            code = _extract_code(subject, body)
+
             emails.append({
                 "from": from_addr,
                 "subject": subject,
                 "date": date_str,
                 "snippet": snippet,
                 "body": body,
+                "code": code,
             })
 
         conn.logout()

@@ -6,34 +6,169 @@ body {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
+    background: #f0f2f5;
 }
-.container { max-width: 600px; width: 100%; }
-.mail-item {
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
+.container { max-width: 640px; width: 100%; }
+
+/* 输入区域 */
+.search-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    margin-bottom: 20px;
+}
+.search-box h2 {
+    font-weight: 400;
+    color: #333;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+.search-box input {
+    border-radius: 8px;
+    border: 1.5px solid #ddd;
+    font-size: 15px;
+    padding: 10px 14px;
+}
+.search-box input:focus {
+    border-color: #4caf93;
+    box-shadow: 0 0 0 3px rgba(76,175,147,0.15);
+}
+.btn-fetch {
+    background: #4caf93;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 15px;
+    padding: 10px 0;
+    width: 100%;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+.btn-fetch:hover { background: #43a085; color: #fff; }
+.btn-fetch:disabled { background: #a5d6c5; color: #fff; }
+
+/* 邮件列表头 */
+.mail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 4px;
+    margin-bottom: 12px;
+}
+.mail-header .inbox-label {
+    font-size: 14px;
+    color: #555;
+}
+.mail-header .mail-count {
+    font-size: 13px;
+    color: #999;
+}
+
+/* 邮件卡片 */
+.mail-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: box-shadow 0.2s;
     cursor: pointer;
 }
-.mail-item:last-child { border-bottom: none; }
-.mail-item:hover { background: #f8f9fa; }
-.mail-from { font-weight: 600; color: #333; font-size: 14px; }
-.mail-subject { color: #555; font-size: 14px; }
-.mail-meta { color: #999; font-size: 12px; }
-.mail-snippet { color: #888; font-size: 13px; margin-top: 2px; }
-.mail-body {
+.mail-card:hover {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.mail-num {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e8f5e9;
+    color: #4caf93;
+    font-weight: 600;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mail-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+.mail-subject {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mail-meta {
+    font-size: 12px;
+    color: #999;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mail-code-box {
+    flex-shrink: 0;
+    text-align: center;
+}
+.mail-code {
+    background: #4caf93;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    letter-spacing: 2px;
+    font-family: 'Courier New', monospace;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+}
+.mail-code:hover { background: #43a085; }
+.mail-code-hint {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 3px;
+}
+.mail-code-copied {
+    font-size: 11px;
+    color: #4caf93;
+    margin-top: 3px;
+    font-weight: 500;
+}
+
+/* 展开的邮件正文 */
+.mail-body-wrap {
+    background: #fff;
+    border-radius: 0 0 10px 10px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    padding: 0 18px 16px 62px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
     display: none;
-    margin-top: 8px;
-    padding: 10px 12px;
+}
+.mail-body-wrap.show { display: block; }
+.mail-body-content {
     background: #f8f9fa;
     border-radius: 6px;
+    padding: 12px 14px;
     font-size: 13px;
-    color: #333;
+    color: #444;
     white-space: pre-wrap;
     word-break: break-word;
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: auto;
+    line-height: 1.6;
 }
-.mail-body.show { display: block; }
-.mail-expand-hint { color: #aaa; font-size: 11px; margin-top: 2px; }
+
 #loading { display: none; }
 #error-msg { display: none; }
 #mail-list { display: none; }
@@ -41,25 +176,26 @@ body {
 {% endblock %}
 
 {% block body %}
-<div class="container text-center">
-    <h2 class="mb-4" style="font-weight: 300; color: #333;">📮 Yahoo 邮件查看</h2>
-    <div class="mb-3">
-        <input type="email" id="alias-input" class="form-control form-control-lg text-center"
-               placeholder="输入别名邮箱地址..." style="border-radius: 8px;">
+<div class="container">
+    <div class="search-box text-center">
+        <h2>📮 Yahoo 邮件查看</h2>
+        <div class="mb-3">
+            <input type="email" id="alias-input" class="form-control text-center"
+                   placeholder="输入别名邮箱地址...">
+        </div>
+        <button id="fetch-btn" class="btn btn-fetch" onclick="fetchMails()">拉取邮件</button>
     </div>
-    <button id="fetch-btn" class="btn btn-primary btn-lg w-100" style="border-radius: 8px;"
-            onclick="fetchMails()">拉取邮件</button>
 
-    <div id="loading" class="mt-4">
-        <div class="spinner-border text-primary" role="status"></div>
+    <div id="loading" class="text-center py-4">
+        <div class="spinner-border" style="color: #4caf93;" role="status"></div>
         <p class="mt-2 text-muted">正在拉取邮件...</p>
     </div>
 
-    <div id="error-msg" class="alert alert-danger mt-4"></div>
+    <div id="error-msg" class="alert alert-danger"></div>
 
-    <div id="empty-msg" class="mt-4 text-muted">暂无邮件</div>
+    <div id="empty-msg" class="text-center py-4 text-muted">暂无邮件</div>
 
-    <div id="mail-list" class="mt-4 text-start"></div>
+    <div id="mail-list"></div>
 </div>
 {% endblock %}
 
@@ -97,19 +233,42 @@ async function fetchMails() {
             return;
         }
 
+        const alias_val = escapeHtml(alias);
         const list = document.getElementById('mail-list');
-        list.innerHTML = data.emails.map((e, i) => `
-            <div class="mail-item" onclick="toggleBody(${i})">
-                <div class="d-flex justify-content-between">
-                    <span class="mail-from">${escapeHtml(e.from)}</span>
-                    <span class="mail-meta">${escapeHtml(e.date)}</span>
-                </div>
-                <div class="mail-subject">${escapeHtml(e.subject)}</div>
-                <div class="mail-snippet">${escapeHtml(e.snippet)}</div>
-                <div class="mail-expand-hint">点击查看完整内容 ▼</div>
-                <div class="mail-body" id="mail-body-${i}">${escapeHtml(e.body)}</div>
+        let html = `
+            <div class="mail-header">
+                <span class="inbox-label">📬 ${alias_val} 的收件箱</span>
+                <span class="mail-count">共 ${data.emails.length} 封邮件</span>
             </div>
-        `).join('');
+        `;
+
+        data.emails.forEach((e, i) => {
+            const fromText = escapeHtml(e.from);
+            const dateText = escapeHtml(formatDate(e.date));
+            const subjectText = escapeHtml(e.subject);
+            const codeBlock = e.code
+                ? `<div class="mail-code-box">
+                       <div class="mail-code" onclick="event.stopPropagation(); copyCode(this, '${escapeHtml(e.code)}')">${escapeHtml(e.code)}</div>
+                       <div class="mail-code-hint">点击复制</div>
+                   </div>`
+                : '';
+
+            html += `
+                <div class="mail-card" onclick="toggleBody(${i})">
+                    <div class="mail-num">${i + 1}</div>
+                    <div class="mail-info">
+                        <div class="mail-subject">${subjectText}</div>
+                        <div class="mail-meta">${fromText} &nbsp;·&nbsp; ${dateText}</div>
+                    </div>
+                    ${codeBlock}
+                </div>
+                <div class="mail-body-wrap" id="mail-body-${i}">
+                    <div class="mail-body-content">${escapeHtml(e.body)}</div>
+                </div>
+            `;
+        });
+
+        list.innerHTML = html;
         list.style.display = 'block';
     } catch (err) {
         document.getElementById('loading').style.display = 'none';
@@ -122,8 +281,43 @@ async function fetchMails() {
 function toggleBody(i) {
     const body = document.getElementById('mail-body-' + i);
     body.classList.toggle('show');
-    const hint = body.previousElementSibling;
-    hint.textContent = body.classList.contains('show') ? '点击收起 ▲' : '点击查看完整内容 ▼';
+}
+
+function copyCode(el, code) {
+    const onSuccess = () => {
+        const hint = el.nextElementSibling;
+        hint.textContent = '已复制!';
+        hint.className = 'mail-code-copied';
+        setTimeout(() => {
+            hint.textContent = '点击复制';
+            hint.className = 'mail-code-hint';
+        }, 1500);
+    };
+    // navigator.clipboard 需要 HTTPS，HTTP 下用 fallback
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(code).then(onSuccess);
+    } else {
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        onSuccess();
+    }
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    try {
+        const d = new Date(dateStr);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+        return dateStr;
+    }
 }
 
 function escapeHtml(text) {
