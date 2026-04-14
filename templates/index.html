@@ -7,16 +7,33 @@ body {
     justify-content: center;
     min-height: 100vh;
 }
-.container { max-width: 500px; width: 100%; }
+.container { max-width: 600px; width: 100%; }
 .mail-item {
     padding: 12px 0;
     border-bottom: 1px solid #eee;
+    cursor: pointer;
 }
 .mail-item:last-child { border-bottom: none; }
+.mail-item:hover { background: #f8f9fa; }
 .mail-from { font-weight: 600; color: #333; font-size: 14px; }
 .mail-subject { color: #555; font-size: 14px; }
 .mail-meta { color: #999; font-size: 12px; }
 .mail-snippet { color: #888; font-size: 13px; margin-top: 2px; }
+.mail-body {
+    display: none;
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 400px;
+    overflow-y: auto;
+}
+.mail-body.show { display: block; }
+.mail-expand-hint { color: #aaa; font-size: 11px; margin-top: 2px; }
 #loading { display: none; }
 #error-msg { display: none; }
 #mail-list { display: none; }
@@ -81,14 +98,16 @@ async function fetchMails() {
         }
 
         const list = document.getElementById('mail-list');
-        list.innerHTML = data.emails.map(e => `
-            <div class="mail-item">
+        list.innerHTML = data.emails.map((e, i) => `
+            <div class="mail-item" onclick="toggleBody(${i})">
                 <div class="d-flex justify-content-between">
                     <span class="mail-from">${escapeHtml(e.from)}</span>
                     <span class="mail-meta">${escapeHtml(e.date)}</span>
                 </div>
                 <div class="mail-subject">${escapeHtml(e.subject)}</div>
                 <div class="mail-snippet">${escapeHtml(e.snippet)}</div>
+                <div class="mail-expand-hint">点击查看完整内容 ▼</div>
+                <div class="mail-body" id="mail-body-${i}">${escapeHtml(e.body)}</div>
             </div>
         `).join('');
         list.style.display = 'block';
@@ -98,6 +117,13 @@ async function fetchMails() {
         document.getElementById('error-msg').textContent = '网络错误，请重试';
         document.getElementById('error-msg').style.display = 'block';
     }
+}
+
+function toggleBody(i) {
+    const body = document.getElementById('mail-body-' + i);
+    body.classList.toggle('show');
+    const hint = body.previousElementSibling;
+    hint.textContent = body.classList.contains('show') ? '点击收起 ▲' : '点击查看完整内容 ▼';
 }
 
 function escapeHtml(text) {
