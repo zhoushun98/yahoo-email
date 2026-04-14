@@ -96,15 +96,22 @@ async def delete_account(account_id: int, request: Request, db: Session = Depend
 @router.post("/aliases")
 async def add_alias(
     request: Request,
-    alias_email: str = Form(...),
+    alias_emails: str = Form(...),
     account_id: int = Form(...),
     db: Session = Depends(get_db),
 ):
     admin = _get_current_admin(request)
     if not admin:
         return RedirectResponse("/admin/login", status_code=303)
-    alias = Alias(alias_email=alias_email, account_id=account_id)
-    db.add(alias)
+    # 支持批量添加，一行一个邮箱
+    for line in alias_emails.splitlines():
+        email = line.strip()
+        if not email:
+            continue
+        # 跳过已存在的别名
+        exists = db.query(Alias).filter(Alias.alias_email == email).first()
+        if not exists:
+            db.add(Alias(alias_email=email, account_id=account_id))
     db.commit()
     return RedirectResponse("/admin/?tab=aliases", status_code=303)
 

@@ -72,7 +72,7 @@ def test_add_account(client):
     assert resp.status_code == 303
 
 
-def test_add_alias(client):
+def test_add_alias_batch(client):
     cookie = create_session_cookie("admin")
     # 先添加账号
     client.post(
@@ -80,10 +80,10 @@ def test_add_alias(client):
         data={"email": "test@yahoo.com", "imap_password": "secret"},
         cookies={"session": cookie},
     )
-    # 添加别名
+    # 批量添加别名（一行一个）
     resp = client.post(
         "/admin/aliases",
-        data={"alias_email": "alias1@yahoo.com", "account_id": "1"},
+        data={"alias_emails": "a1@yahoo.com\na2@yahoo.com\na3@yahoo.com", "account_id": "1"},
         cookies={"session": cookie},
     )
     assert resp.status_code == 303
