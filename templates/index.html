@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block extra_style %}
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+.container { max-width: 500px; width: 100%; }
+.mail-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+.mail-item:last-child { border-bottom: none; }
+.mail-from { font-weight: 600; color: #333; font-size: 14px; }
+.mail-subject { color: #555; font-size: 14px; }
+.mail-meta { color: #999; font-size: 12px; }
+.mail-snippet { color: #888; font-size: 13px; margin-top: 2px; }
+#loading { display: none; }
+#error-msg { display: none; }
+#mail-list { display: none; }
+#empty-msg { display: none; }
+{% endblock %}
+
+{% block body %}
+<div class="container text-center">
+    <h2 class="mb-4" style="font-weight: 300; color: #333;">📮 Yahoo 邮件查看</h2>
+    <div class="mb-3">
+        <input type="email" id="alias-input" class="form-control form-control-lg text-center"
+               placeholder="输入别名邮箱地址..." style="border-radius: 8px;">
+    </div>
+    <button id="fetch-btn" class="btn btn-primary btn-lg w-100" style="border-radius: 8px;"
+            onclick="fetchMails()">拉取邮件</button>
+
+    <div id="loading" class="mt-4">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2 text-muted">正在拉取邮件...</p>
+    </div>
+
+    <div id="error-msg" class="alert alert-danger mt-4"></div>
+
+    <div id="empty-msg" class="mt-4 text-muted">暂无邮件</div>
+
+    <div id="mail-list" class="mt-4 text-start"></div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+async function fetchMails() {
+    const alias = document.getElementById('alias-input').value.trim();
+    if (!alias) return;
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('error-msg').style.display = 'none';
+    document.getElementById('mail-list').style.display = 'none';
+    document.getElementById('empty-msg').style.display = 'none';
+    document.getElementById('fetch-btn').disabled = true;
+
+    try {
+        const resp = await fetch('/api/mail/fetch', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({alias_email: alias})
+        });
+        const data = await resp.json();
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('fetch-btn').disabled = false;
+
+        if (!data.success) {
+            document.getElementById('error-msg').textContent = data.error;
+            document.getElementById('error-msg').style.display = 'block';
+            return;
+        }
+
+        if (data.emails.length === 0) {
+            document.getElementById('empty-msg').style.display = 'block';
+            return;
+        }
+
+        const list = document.getElementById('mail-list');
+        list.innerHTML = data.emails.map(e => `
+            <div class="mail-item">
+                <div class="d-flex justify-content-between">
+                    <span class="mail-from">${escapeHtml(e.from)}</span>
+                    <span class="mail-meta">${escapeHtml(e.date)}</span>
+                </div>
+                <div class="mail-subject">${escapeHtml(e.subject)}</div>
+                <div class="mail-snippet">${escapeHtml(e.snippet)}</div>
+            </div>
+        `).join('');
+        list.style.display = 'block';
+    } catch (err) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('fetch-btn').disabled = false;
+        document.getElementById('error-msg').textContent = '网络错误，请重试';
+        document.getElementById('error-msg').style.display = 'block';
+    }
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text || '';
+    return div.innerHTML;
+}
+
+document.getElementById('alias-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') fetchMails();
+});
+</script>
+{% endblock %}

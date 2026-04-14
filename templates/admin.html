@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}管理后台{% endblock %}
+
+{% block extra_style %}
+body { background: #fff; }
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <nav class="navbar navbar-light bg-light border-bottom mb-3">
+        <div class="container">
+            <span class="navbar-brand">📮 管理后台</span>
+            <a href="/admin/logout" class="btn btn-outline-danger btn-sm">退出登录</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <ul class="nav nav-tabs mb-3" id="adminTabs" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link {% if tab == 'accounts' %}active{% endif %}"
+                   href="/admin/?tab=accounts">主账号</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if tab == 'aliases' %}active{% endif %}"
+                   href="/admin/?tab=aliases">别名管理</a>
+            </li>
+        </ul>
+
+        {% if tab == 'accounts' %}
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAccountModal">+ 添加账号</button>
+        </div>
+        <table class="table table-hover">
+            <thead>
+                <tr><th>邮箱</th><th>别名数</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                <tr>
+                    <td>{{ account.email }}</td>
+                    <td>{{ account.aliases | length }}</td>
+                    <td>
+                        {% if account.status == 'normal' %}
+                        <span class="badge bg-success">正常</span>
+                        {% else %}
+                        <span class="badge bg-danger">{{ account.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="post" action="/admin/accounts/{{ account.id }}/delete"
+                              style="display:inline" onsubmit="return confirm('确定删除？关联的别名也会被删除。')">
+                            <button class="btn btn-outline-danger btn-sm">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not accounts %}
+                <tr><td colspan="4" class="text-center text-muted">暂无账号</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="modal fade" id="addAccountModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" action="/admin/accounts">
+                        <div class="modal-header">
+                            <h5 class="modal-title">添加雅虎主账号</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">邮箱地址</label>
+                                <input type="email" name="email" class="form-control" placeholder="user@yahoo.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">IMAP 应用密码</label>
+                                <input type="password" name="imap_password" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">添加</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% elif tab == 'aliases' %}
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAliasModal">+ 添加别名</button>
+        </div>
+        <table class="table table-hover">
+            <thead>
+                <tr><th>别名邮箱</th><th>所属主账号</th><th>状态</th><th>操作</th></tr>
+            </thead>
+            <tbody>
+                {% for alias in aliases %}
+                <tr>
+                    <td>{{ alias.alias_email }}</td>
+                    <td>{{ alias.account.email }}</td>
+                    <td>
+                        {% if alias.enabled %}
+                        <span class="badge bg-success">启用</span>
+                        {% else %}
+                        <span class="badge bg-secondary">禁用</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="post" action="/admin/aliases/{{ alias.id }}/toggle" style="display:inline">
+                            <button class="btn btn-outline-warning btn-sm">
+                                {{ "禁用" if alias.enabled else "启用" }}
+                            </button>
+                        </form>
+                        <form method="post" action="/admin/aliases/{{ alias.id }}/delete"
+                              style="display:inline" onsubmit="return confirm('确定删除该别名？')">
+                            <button class="btn btn-outline-danger btn-sm">删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if not aliases %}
+                <tr><td colspan="4" class="text-center text-muted">暂无别名</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <div class="modal fade" id="addAliasModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="post" action="/admin/aliases">
+                        <div class="modal-header">
+                            <h5 class="modal-title">添加别名</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">别名邮箱</label>
+                                <input type="email" name="alias_email" class="form-control" placeholder="alias@yahoo.com" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">所属主账号</label>
+                                <select name="account_id" class="form-select" required>
+                                    {% for account in accounts %}
+                                    <option value="{{ account.id }}">{{ account.email }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                            <button type="submit" class="btn btn-primary">添加</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
