@@ -24,17 +24,11 @@ cd yahoo-email
 # 安装依赖（需要 uv）
 uv sync
 
-# 配置环境变量
-cat > .env << 'EOF'
-SECRET_KEY=你的随机密钥
-FERNET_KEY=你的Fernet密钥
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=admin123
-EOF
-
-# 生成密钥（参考）
-# python3 -c "import secrets; print(secrets.token_hex(32))"
-# python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# 生成 .env 配置文件（自动生成密钥）
+echo "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > .env
+echo "FERNET_KEY=$(python3 -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> .env
+echo "ADMIN_USERNAME=admin" >> .env
+echo "ADMIN_PASSWORD=admin123" >> .env
 
 # 启动
 uv run uvicorn main:app --host 0.0.0.0 --port 8000
