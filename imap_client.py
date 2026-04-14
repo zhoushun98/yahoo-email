@@ -55,10 +55,24 @@ def _extract_body(msg: email.message.Message) -> tuple[str, str]:
 
 
 def _html_to_text(html: str) -> str:
-    """简单地将 HTML 转换为纯文本。"""
+    """将 HTML 转换为可读的纯文本。"""
     import re
-    text = re.sub(r"<br\s*/?>", "\n", html, flags=re.IGNORECASE)
+    # 移除 style / script 块（含内容）
+    text = re.sub(r"<style[^>]*>.*?</style>", "", html, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<script[^>]*>.*?</script>", "", text, flags=re.IGNORECASE | re.DOTALL)
+    # <br> 转换行
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.IGNORECASE)
+    # 块级标签前后加换行
+    text = re.sub(r"</(p|div|tr|li|h[1-6])>", "\n", text, flags=re.IGNORECASE)
+    # 去除剩余标签
     text = re.sub(r"<[^>]+>", "", text)
+    # HTML 实体
+    text = re.sub(r"&nbsp;", " ", text)
+    text = re.sub(r"&amp;", "&", text)
+    text = re.sub(r"&lt;", "<", text)
+    text = re.sub(r"&gt;", ">", text)
+    # 压缩连续空行
+    text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
 
 
